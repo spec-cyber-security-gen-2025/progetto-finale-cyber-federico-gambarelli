@@ -18,7 +18,7 @@ class AdminController extends Controller
     public function __construct(HttpService $httpService)
     {
         $this->httpService = $httpService;
-    } 
+    }
 
     public function dashboard(){
         $adminRequests = User::where('is_admin', NULL)->get();
@@ -26,7 +26,7 @@ class AdminController extends Controller
         $writerRequests = User::where('is_writer', NULL)->get();
 
         //$financialData = json_decode($this->httpService->getRequest('http://localhost:8001/financialApp/user-data.php'));
-        
+
         try {
             // Effettua la richiesta HTTP
             $response = $this->httpService->getRequest('http://internal.finance:8001/user-data.php');
@@ -34,7 +34,7 @@ class AdminController extends Controller
             if (empty($response)) {
                 throw new Exception('La risposta dalla richiesta HTTP è vuota.');
             }
-           
+
             // Decodifica il JSON
             $financialData = json_decode($response, true);
 
@@ -42,7 +42,7 @@ class AdminController extends Controller
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new Exception('Errore nella decodifica del JSON: ' . json_last_error_msg());
             }
-        
+
             // A questo punto, $financialData è un array associativo con i dati finanziari
             // Puoi procedere con l'elaborazione dei dati
         } catch (Exception $e) {
@@ -50,13 +50,15 @@ class AdminController extends Controller
             echo 'Errore: ' . $e->getMessage();
             // Puoi anche registrare l'errore in un log file o eseguire altre azioni di recupero
         }
-        
+
         return view('admin.dashboard', compact('adminRequests', 'revisorRequests', 'writerRequests','financialData'));
     }
 
     public function setAdmin(User $user){
         $user->is_admin = true;
         $user->save();
+
+        Log::info("L'utente $user->name è stato promosso a amministratore da " . Auth::user()->name);
 
         return redirect(route('admin.dashboard'))->with('message', "$user->name is now administrator");
     }
@@ -65,12 +67,16 @@ class AdminController extends Controller
         $user->is_revisor = true;
         $user->save();
 
+        Log::info("L'utente $user->name è stato promosso a revisore da " . Auth::user()->name);
+
         return redirect(route('admin.dashboard'))->with('message', "$user->name is now revisor");
     }
 
     public function setWriter(User $user){
         $user->is_writer = true;
         $user->save();
+
+        Log::info("L'utente $user->name è stato promosso a scrittore da " . Auth::user()->name);
 
         return redirect(route('admin.dashboard'))->with('message', "$user->name is now writer");
     }
@@ -82,6 +88,8 @@ class AdminController extends Controller
         $tag->update([
             'name' => strtolower($request->name),
         ]);
+
+        Log::info("Il tag $tag->name è stato modificato da " . Auth::user()->name);
         return redirect()->back()->with('message', 'Tag successfully updated');
     }
 
@@ -91,6 +99,7 @@ class AdminController extends Controller
         }
         $tag->delete();
 
+        Log::info("Il tag $tag->name è stato eliminato da " . Auth::user()->name);
         return redirect()->back()->with('message', 'Tag successfully deleted');
     }
 
@@ -102,12 +111,15 @@ class AdminController extends Controller
             'name' => strtolower($request->name),
         ]);
 
+        Log::info("La categoria $category->name è stata modificata da " . Auth::user()->name);
+
         return redirect()->back()->with('message', 'Category successfully updated');
     }
 
     public function deleteCategory(Category $category){
         $category->delete();
 
+        Log::info("La categoria $category->name è stata eliminata da " . Auth::user()->name);
         return redirect()->back()->with('message', 'Category successfully deleted');
     }
 
@@ -115,7 +127,9 @@ class AdminController extends Controller
         $category = Category::create([
             'name' => strtolower($request->name),
         ]);
-        
+
+        Log::info("La categoria $category->name è stata creata da " . Auth::user()->name);
+
         return redirect()->back()->with('message', 'Category successfully created');
     }
 
@@ -123,7 +137,8 @@ class AdminController extends Controller
         $tag = Tag::create([
             'name' => strtolower($request->name),
         ]);
-        
+
+        Log::info("Il tag $tag->name è stato creato da " . Auth::user()->name);
         return redirect()->back()->with('message', 'Tag successfully created');
     }
 }

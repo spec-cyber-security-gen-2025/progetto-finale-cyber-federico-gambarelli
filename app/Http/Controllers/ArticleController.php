@@ -6,6 +6,7 @@ use App\Models\Tag;
 use App\Models\User;
 use App\Models\Article;
 use App\Models\Category;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -62,7 +63,7 @@ class ArticleController extends Controller implements HasMiddleware
             'user_id' => Auth::user()->id,
             'slug' => Str::slug($request->title),
         ]);
-        
+
         $tags = explode(',', $request->tags);
 
         foreach($tags as $i => $tag){
@@ -75,6 +76,8 @@ class ArticleController extends Controller implements HasMiddleware
             ]);
             $article->tags()->attach($newTag);
         }
+
+        Log::info('Articolo creato con successo', ['user_id' => Auth::user()->id, 'article_id' => $article->id]);
 
         return redirect(route('homepage'))->with('message', 'Articolo creato con successo');
     }
@@ -126,7 +129,7 @@ class ArticleController extends Controller implements HasMiddleware
                 'image' => $request->file('image')->store('public/images')
             ]);
         }
-        
+
         $tags = explode(',', $request->tags);
 
         foreach($tags as $i => $tag){
@@ -143,6 +146,8 @@ class ArticleController extends Controller implements HasMiddleware
         }
         $article->tags()->sync($newTags);
 
+        Log::info('Articolo modificato con successo', ['user_id' => Auth::user()->id, 'article_id' => $article->id]);
+
         return redirect(route('writer.dashboard'))->with('message', 'Articolo modificato con successo');
     }
 
@@ -155,7 +160,9 @@ class ArticleController extends Controller implements HasMiddleware
             $article->tags()->detach($tag);
         }
         $article->delete();
-        
+
+        Log::info('Articolo cancellato con successo', ['user_id' => Auth::user()->id, 'article_id' => $article->id]);
+
         return redirect()->back()->with('message', 'Articolo cancellato con successo');
     }
 
@@ -163,7 +170,7 @@ class ArticleController extends Controller implements HasMiddleware
         $articles = $category->articles()->where('is_accepted', true)->orderBy('created_at', 'desc')->get();
         return view('articles.by-category', compact('category', 'articles'));
     }
-    
+
     public function byUser(User $user){
         $articles = $user->articles()->where('is_accepted', true)->orderBy('created_at', 'desc')->get();
         return view('articles.by-user', compact('user', 'articles'));

@@ -21,7 +21,7 @@ Log di:
 
 ## Operazioni critiche in post e non in get
 
-### Scenario: 
+### Scenario:
 Ci si espone a possibili attacchi CSRF portando in questo caso ad una vertical escalation of privileges.
 Provare un attacco csrf creando un piccolo server php che visualizzi una pagina html in cui in background scatta una chiamata ajax ad una rotta potenzialmente critica e non protetta (es. /admin/{user}/set-admin). Partendo dal browser dell'utente è possibile che l'azione vada in porto in quanto l'utente ha i privilegi adeguati.
 
@@ -30,8 +30,8 @@ Cambiare da get a post, facendo i dovuti controlli
 
 ## Uso non corretto di fillable nei modelli
 
-### Scenario 
-Un utente malevolo può provare a indovinare campi tipici di ruoli utente tipo isAdmin, is_admin etc.. alterando il form dal browser 
+### Scenario
+Un utente malevolo può provare a indovinare campi tipici di ruoli utente tipo isAdmin, is_admin etc.. alterando il form dal browser
 
 ### Mitigazione
 Nella proprietà fillable del modello in questione inserire tutti solo i campi gestiti nel form
@@ -40,7 +40,7 @@ Nella proprietà fillable del modello in questione inserire tutti solo i campi g
 
 ### Scenario
 Esiste la funzionalità di suggerimento news recenti in fase di scrittura dell'articolo per prendere ispirazione. E' presente un menu a scelta facilmente alterabile da ispeziona elemento. L'utente malintenzionato con un minimo di conoscenza del sistema cambia l'url e prova a far lanciare al server una richiesta che lui non sarebbe autorizzato.
-Per esempio il server recupera dei dati sugli utenti da un altro server in esecuzione sulla porta 8001. 
+Per esempio il server recupera dei dati sugli utenti da un altro server in esecuzione sulla porta 8001.
 
 
 ### Mitigazione
@@ -58,4 +58,3 @@ Supponiamo che ci sia una misconfiguration a livello di CORS (config/cors.php) c
 
 ### Mitigazione
 Creare un meccanismo che filtri il testo prima di salvarlo e per essere sicuri anche in fase di visualizzazione dell'articolo.
-
