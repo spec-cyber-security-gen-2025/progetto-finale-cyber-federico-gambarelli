@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use Hash;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Laravel\Fortify\Fortify;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use App\Actions\Fortify\CreateNewUser;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -37,6 +40,20 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+
+
+        Event::listen('Illuminate\Auth\Events\Login', function ($event) {
+            Log::info('Login attempt by ' . request()->ip() . ' for ' . $event->user->{Fortify::username()});
+        });
+
+        Event::listen('Illuminate\Auth\Events\Registered', function ($event) {
+            Log::info('New user registered: ' . $event->user->{Fortify::username()} . ' from ' . request()->ip());
+        });
+
+        Event::listen('Illuminate\Auth\Events\Logout', function ($event) {
+            Log::info('User ' . Auth::user()->{Fortify::username()} . ' logged out from ' . request()->ip());
+        });
+
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
