@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Tag;
 use App\Models\User;
+use Nette\Utils\Html;
 use App\Models\Article;
 use App\Models\Category;
-use Illuminate\Cache\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Cache\RateLimiter;
+use App\Services\HtmlFilterService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -37,34 +40,42 @@ class ArticleController extends Controller implements HasMiddleware
      */
     public function create()
     {
+        Gate::authorize('create', Article::class);
         return view('articles.create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, HtmlFilterService $htmlservice)
     {
-        $request->validate([
+        Gate::authorize('create', Article::class);
+
+        $articleData = $request->validate([
             'title' => 'required|unique:articles|min:5',
             'subtitle' => 'required|min:5',
             'body' => 'required|min:10',
             'image' => 'required|image',
             'category' => 'required',
-            'tags' => 'required'
+            'tags' => 'required',
         ]);
 
+        $articleData['body'] = $htmlservice->filterHtml($articleData['body']);
+
+
+
+        // $article = Article::create($articleData);
         $article = Article::create([
-            'title' => $request->title,
-            'subtitle' => $request->subtitle,
-            'body' => $request->body,
+            'title' => $articleData['title'],
+            'subtitle' => $articleData['subtitle'],
+            'body' => $articleData['body'],
             'image' => $request->file('image')->store('public/images'),
-            'category_id' => $request->category,
+            'category_id' => $articleData['category'],
             'user_id' => Auth::user()->id,
-            'slug' => Str::slug($request->title),
+            'slug' => Str::slug($articleData['title']),
         ]);
 
-        $tags = explode(',', $request->tags);
+        $tags = explode(',', $articleData['tags']);
 
         foreach($tags as $i => $tag){
             $tags[$i] = trim($tag);
@@ -95,9 +106,8 @@ class ArticleController extends Controller implements HasMiddleware
      */
     public function edit(Article $article)
     {
-        if(Auth::user()->id != $article->user_id){
-            return redirect()->route('homepage')->with('alert', 'Accesso non consentito');
-        }
+        Gate::authorize('update', [$article, Auth::user()]);
+
         return view('articles.edit', compact('article'));
     }
 
@@ -106,6 +116,8 @@ class ArticleController extends Controller implements HasMiddleware
      */
     public function update(Request $request, Article $article)
     {
+        Gate::authorize('update', [$article, Auth::user()]);
+
         $request->validate([
             'title' => 'required|min:5|unique:articles,title,' . $article->id,
             'subtitle' => 'required|min:5',
@@ -156,6 +168,8 @@ class ArticleController extends Controller implements HasMiddleware
      */
     public function destroy(Article $article)
     {
+        Gate::authorize('delete', [$article, Auth::user()]);
+
         foreach ($article->tags as $tag) {
             $article->tags()->detach($tag);
         }

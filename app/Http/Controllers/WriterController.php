@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class WriterController extends Controller
 {
@@ -12,7 +13,7 @@ class WriterController extends Controller
         $acceptedArticles = $articles->where('is_accepted', true);
         $rejectedArticles = $articles->where('is_accepted', false);
         $unrevisionedArticles = $articles->where('is_accepted', NULL);
-        
+
         return view('writer.dashboard', compact('acceptedArticles', 'rejectedArticles', 'unrevisionedArticles'));
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Exception\RequestException;
 
 class HttpService
@@ -20,13 +21,15 @@ class HttpService
 
     public function getRequest($url)
     {
+
+
         $parsedUrl = parse_url($url);
 
         // Validate protocol
         if (!in_array($parsedUrl['scheme'], $this->allowedProtocols)) {
             return 'Protocol not allowed';
         }
-       
+
         // Validate domain
         if (!isset($parsedUrl['host']) || !in_array($parsedUrl['host'], $this->allowedDomains)) {
             return 'Domain not allowed';
